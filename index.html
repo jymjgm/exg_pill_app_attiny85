@@ -3,54 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AT_EXG_graph</title>
+    <title>Real-time Sensor Data</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="text/javascript" charset="utf-8" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
 </head>
-
 <body>
-    <canvas id="chart" width="280" height="140"></canvas>
+    <canvas id="chart" width="400" height="200"></canvas>
 
     <script>
-        let port;
-        let reader;
         let dataBuffer = [];
         const maxDataPoints = 20;
-        
-        var ctx = document.getElementById('chart').getContext('2d');
-        var chart = new Chart(ctx, {
-	        type: 'line',
-	        data: {
-	    	    labels: Array(maxDataPoints).fill(''),
-		        datasets: [{
-                    label: 'Sensor Data', borderColor: "blue", data: [],
-                    borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0
-			    }]
-	        },
-	        options: {
-                responsive: true, maintainAspectRation: false,
+
+        const ctx = document.getElementById('chart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Sensor Data',
+                    data: [],
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 animation: {
-                    duration: 20, easing: 'easeInOutQuad'
+                    duration: 20,
+                    easing: 'easeInOutQuad'
                 },
                 scales: {
                     x: {
                         display: true,
                         ticks: {
-                            autoSkip: true, maxTicksLimit: 10
+                            autoSkip: true,
+                            maxTicksLimit: 10
                         }
                     },
                     y: {
-                        display: true, Min: -200, Max: 200
+                        display: true,
+                        suggestedMin: -200,
+                        suggestedMax: 300
                     }
                 }
             }
         });
 
-        function yunmin(){
-	        var recv  = window.AppInventor.getWebViewString();
-	        chart.data.datasets[0].data.shift();
-	        chart.data.datasets[0].data.push(recv);
-	        chart.update();
+        function yunmin() {
+            try {
+                var recv = window.AppInventor.getWebViewString();
+                let sensorValue = parseFloat(recv);
+                if (!isNaN(sensorValue)) {
+                    if (dataBuffer.length >= maxDataPoints) {
+                        dataBuffer.shift();
+                        chart.data.labels.shift();
+                    }
+                    dataBuffer.push(sensorValue);
+                    chart.data.labels.push(new Date().toLocaleTimeString());
+                    chart.data.datasets[0].data = dataBuffer;
+                    chart.update();
+                }
+            } catch (err) {
+                console.error("Error processing data from App Inventor:", err);
+            }
         }
     </script>
 </body>
